@@ -7,8 +7,8 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from user_profile.models import UserProfile
+from .serializers import UserSerializer
 
 
 class CheckAuthenticatedView(APIView):
@@ -26,8 +26,14 @@ class CheckAuthenticatedView(APIView):
 
 
 @method_decorator(csrf_protect, name='dispatch')
-class SignupView(APIView):
+class AccountsView(APIView):
     permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        users = User.objects.all()
+
+        users = UserSerializer(users, many=True)
+        return Response(data=users.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         data = self.request.data
@@ -51,6 +57,13 @@ class SignupView(APIView):
         except:
             return Response(data={"error": "Something went wrong while registering "},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def delete(self, request):
+        user = self.request.user
+
+        user = User.objects.filter(id=user.id).delete()
+
+        return Response(data={"success": "user has deleted"}, status=status.HTTP_200_OK)
 
 
 @method_decorator(csrf_protect, name='dispatch')
